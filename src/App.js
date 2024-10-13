@@ -10,24 +10,26 @@ function App() {
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
 
-  const handleProcessCode = () => {
-    // Use hardcoded data
+  const handleProcessCode = async () => {
+    // For development purposes, use hardcoded data
     setNodes(initialNodes);
     setEdges(initialEdges);
 
-    // Backend
+    // When ready to use the backend, comment out the above lines and uncomment the code below
     /*
-    fetch('your-backend-endpoint', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code }),
-    })
-      .then(response => response.json())
-      .then(data => {
-        setNodes(data.nodes);
-        setEdges(data.edges);
-      })
-      .catch(error => console.error('Error:', error));
+    try {
+      const response = await fetch('http://your-backend-endpoint', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      });
+      const data = await response.json();
+      setNodes(data.nodes);
+      setEdges(data.edges);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      // Optionally, display an error message to the user
+    }
     */
   };
 
