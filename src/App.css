@@ -4,7 +4,7 @@
 }
 
 .editor-section {
-  flex: 1;
+  flex: 0 0 40%; /* Take up 30% of the screen width */
   display: flex;
   flex-direction: column;
 }
@@ -26,7 +26,7 @@
 }
 
 .graph-section {
-  flex: 1;
+  flex: 1 0 60%; /* Take up 70% of the screen width */
   display: flex;
   position: relative;
 }
