@@ -43,8 +43,6 @@ export const initialNodes = [
       borderRadius: '50%',
       padding: '5px',
       fontSize: '10px',
-      width: '100px',
-      height: '100px',
       textAlign: 'center',
     },
   },
@@ -246,5 +244,13 @@ export const initialEdges = [
     style: { stroke: '#FF5733', strokeWidth: 2 },
     label: 'Process to Result B',
     labelStyle: { fill: '#FF5733' },
+  },
+  {
+    id: 'connector',
+    source: '2a',
+    target: '4',
+    animated: true,
+    type: 'smoothstep',
+    style: { stroke: '#FF5733', strokeWidth: 1 },
   },
 ];
