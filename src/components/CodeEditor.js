@@ -1,7 +1,6 @@
 import React from 'react';
 import AceEditor from 'react-ace';
 
-// Import AceEditor modes and themes
 import 'ace-builds/src-noconflict/mode-python';
 import 'ace-builds/src-noconflict/theme-monokai';
 

@@ -8,6 +8,7 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import dagre from 'dagre';
 
+// Use Dagre library to format graph into tree
 const dagreGraph = new dagre.graphlib.Graph();
 dagreGraph.setDefaultEdgeLabel(() => ({}));
 
@@ -53,7 +54,7 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges }) => {
       const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
         initialNodes,
         initialEdges,
-        'TB' // Default layout direction
+        'TB' // Default layout direction is vertical
       );
       setNodesState(layoutedNodes);
       setEdgesState(layoutedEdges);

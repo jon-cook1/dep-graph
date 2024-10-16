@@ -15,7 +15,7 @@ function App() {
     setNodes(initialNodes);
     setEdges(initialEdges);
 
-    // When ready to use the backend, comment out the above lines and uncomment the code below
+    // TODO: Uncomment to connect to backend
     /*
     try {
       const response = await fetch('http://your-backend-endpoint', {
