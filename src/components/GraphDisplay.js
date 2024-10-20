@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import ReactFlow, {
   useNodesState,
   useEdgesState,
@@ -15,9 +15,14 @@ dagreGraph.setDefaultEdgeLabel(() => ({}));
 const nodeWidth = 150;
 const nodeHeight = 50;
 
-const getLayoutedElements = (nodes, edges, direction = 'TB') => {
+const getLayoutedElements = (nodes, edges, direction = 'TB', ranker = 'network-simplex') => {
   const isHorizontal = direction === 'LR';
-  dagreGraph.setGraph({ rankdir: direction });
+  
+  // Set graph with ranker and direction
+  dagreGraph.setGraph({
+    rankdir: direction,
+    ranker: ranker,  // You can use 'network-simplex', 'tight-tree', or 'longest-path'
+  });
 
   nodes.forEach((node) => {
     dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
@@ -47,6 +52,8 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges }) => {
   const [nodes, setNodesState, onNodesChange] = useNodesState([]);
   const [edges, setEdgesState, onEdgesChange] = useEdgesState([]);
   const { fitView } = useReactFlow();
+  const [coloringStarted, setColoringStarted] = useState(false); // Track if coloring has started
+  const animationIntervalRef = useRef(null); // To store the interval ID for resetting
 
   // Update local state and layout when props change
   useEffect(() => {
@@ -54,7 +61,8 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges }) => {
       const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
         initialNodes,
         initialEdges,
-        'TB' // Default layout direction is vertical
+        'TB',  // Default layout direction is vertical
+        'network-simplex'  // Default ranker
       );
       setNodesState(layoutedNodes);
       setEdgesState(layoutedEdges);
@@ -62,25 +70,154 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges }) => {
     }
   }, [initialNodes, initialEdges, setNodesState, setEdgesState, fitView]);
 
+  // Reset all nodes and edges to base colors
+  const resetGraphColors = useCallback(() => {
+    // Reset nodes to their base color
+    setNodesState((nds) =>
+      nds.map((node) => ({
+        ...node,
+        style: {
+          ...node.style,
+          background: '#D3D3D3', // Default inactive color
+        },
+      }))
+    );
+    // Reset edges to their base color
+    setEdgesState((eds) =>
+      eds.map((edge) => ({
+        ...edge,
+        style: {
+          ...edge.style,
+          stroke: '#D3D3D3', // Default inactive color
+        },
+      }))
+    );
+  }, [setNodesState, setEdgesState]);
+
+  // BFS Function to color nodes and edges one by one
+  const colorNodesAndEdgesBFS = useCallback(() => {
+    let queue = ['node1']; // Start BFS from node1
+    const visited = new Set();
+
+    // Clear any existing intervals
+    if (animationIntervalRef.current) {
+      clearInterval(animationIntervalRef.current);
+    }
+
+    const interval = setInterval(() => {
+      if (queue.length > 0) {
+        const currentNodeId = queue.shift(); // Dequeue the current node
+
+        // Color the current node
+        setNodesState((nds) =>
+          nds.map((node) => {
+            if (node.id === currentNodeId) {
+              visited.add(node.id); // Mark node as visited
+              return {
+                ...node,
+                style: {
+                  ...node.style,
+                  background: '#00FF00', // Color node when active
+                },
+              };
+            }
+            return node;
+          })
+        );
+
+        // Find and color edges connected to the current node
+        setEdgesState((eds) =>
+          eds.map((edge) => {
+            if (edge.source === currentNodeId && !visited.has(edge.target)) {
+              queue.push(edge.target); // Enqueue the target node of the current edge
+              return {
+                ...edge,
+                style: {
+                  ...edge.style,
+                  stroke: '#00FF00', // Color the edge when active
+                },
+              };
+            }
+            return edge;
+          })
+        );
+      } else {
+        clearInterval(interval); // Stop when the queue is empty
+      }
+    }, 500); // 500ms interval for each node/edge pair
+
+    animationIntervalRef.current = interval; // Store interval ID
+  }, [setNodesState, setEdgesState]);
+
+  // Handle rerun animation button click
+  const handleRerunAnimation = useCallback(() => {
+    resetGraphColors(); // Reset all colors first
+    setColoringStarted(false); // Allow the BFS to start again
+  }, [resetGraphColors]);
+
+  // Trigger the node and edge coloring after rendering
+  useEffect(() => {
+    if (nodes.length && edges.length && !coloringStarted) {
+      colorNodesAndEdgesBFS();
+      setColoringStarted(true); // Ensure BFS only starts once
+    }
+  }, [nodes, edges, colorNodesAndEdgesBFS, coloringStarted]);
+
   const onLayout = useCallback(
-    (direction) => {
-      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-        nodes,
-        edges,
-        direction
-      );
-      setNodesState(layoutedNodes);
-      setEdgesState(layoutedEdges);
-      fitView();
+    (direction, ranker = 'network-simplex') => {
+      // Trigger layout twice to ensure correct formatting
+      const doubleClickLayout = () => {
+        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
+          nodes,
+          edges,
+          direction,
+          ranker  // Apply the selected ranker
+        );
+        setNodesState(layoutedNodes);
+        setEdgesState(layoutedEdges);
+        fitView();
+        // Trigger layout again
+        setTimeout(() => {
+          const { nodes: reLayoutedNodes, edges: reLayoutedEdges } = getLayoutedElements(
+            nodes,
+            edges,
+            direction,
+            ranker  // Apply the selected ranker
+          );
+          setNodesState(reLayoutedNodes);
+          setEdgesState(reLayoutedEdges);
+          fitView();
+        }, 50); // Small delay for the second click effect
+      };
+      doubleClickLayout();
     },
     [nodes, edges, setNodesState, setEdgesState, fitView]
   );
 
+  // Inline style for buttons matching "Process Code" button
+  const buttonStyle = {
+    padding: '10px 20px',
+    margin: '5px',
+    backgroundColor: '#007BFF',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    fontSize: '16px',
+  };
+
   return (
     <div className="graph-display">
       <div className="layout-buttons">
-        <button onClick={() => onLayout('TB')}>Vertical Layout</button>
-        <button onClick={() => onLayout('LR')}>Horizontal Layout</button>
+        <button style={buttonStyle} onClick={() => onLayout('TB', 'network-simplex')}>
+          Vertical Layout
+        </button>
+        <button style={buttonStyle} onClick={() => onLayout('LR', 'network-simplex')}>
+          Horizontal Layout
+        </button>
+        <button style={buttonStyle} onClick={handleRerunAnimation}>
+          Rerun Animation
+        </button> {/* New button with inline style */}
       </div>
       <ReactFlow
         nodes={nodes}
