@@ -200,19 +200,35 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges }) => {
 
   const onLayout = useCallback(
     (direction, ranker = 'network-simplex') => {
-      // Trigger layout
-      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-        nodes,
-        edges,
-        direction,
-        ranker  // Apply the selected ranker
-      );
-      setNodesState(layoutedNodes);
-      setEdgesState(layoutedEdges);
-      fitView();
+      // Trigger layout twice to ensure correct formatting
+      const doubleClickLayout = () => {
+        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
+          nodes,
+          edges,
+          direction,
+          ranker  // Apply the selected ranker
+        );
+        setNodesState(layoutedNodes);
+        setEdgesState(layoutedEdges);
+        fitView();
+        // Trigger layout again
+        setTimeout(() => {
+          const { nodes: reLayoutedNodes, edges: reLayoutedEdges } = getLayoutedElements(
+            nodes,
+            edges,
+            direction,
+            ranker  // Apply the selected ranker
+          );
+          setNodesState(reLayoutedNodes);
+          setEdgesState(reLayoutedEdges);
+          fitView();
+        }, 50); // Small delay for the second click effect
+      };
+      doubleClickLayout();
     },
     [nodes, edges, setNodesState, setEdgesState, fitView]
   );
+
 
   // Inline style for buttons matching "Process Code" button
   const buttonStyle = {
