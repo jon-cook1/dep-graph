@@ -17,15 +17,26 @@ const nodeHeight = 50;
 
 const getLayoutedElements = (nodes, edges, direction = 'TB', ranker = 'network-simplex') => {
   const isHorizontal = direction === 'LR';
-  
+
   // Set graph with ranker and direction
   dagreGraph.setGraph({
     rankdir: direction,
-    ranker: ranker,  // You can use 'network-simplex', 'tight-tree', or 'longest-path'
+    ranker: ranker,
   });
 
+  // Set manual ordering by rank constraints
+  dagreGraph.setGraph({
+    nodesep: 50,  // Node separation
+    rankdir: direction,
+    ranker,
+  });
+
+  // Add manual ranking through rank constraints
   nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
+    dagreGraph.setNode(node.id, {
+      width: nodeWidth,
+      height: nodeHeight,
+    });
   });
 
   edges.forEach((edge) => {
@@ -71,7 +82,7 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges }) => {
   }, [initialNodes, initialEdges, setNodesState, setEdgesState, fitView]);
 
   // Reset all nodes and edges to base colors
-  const resetGraphColors = useCallback(() => {
+    const resetGraphColors = useCallback(() => {
     // Reset nodes to their base color
     setNodesState((nds) =>
       nds.map((node) => ({
@@ -82,36 +93,43 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges }) => {
         },
       }))
     );
-    // Reset edges to their base color
+  
+    // Reset edges to their base color, non-animated, and stroke width 1
     setEdgesState((eds) =>
       eds.map((edge) => ({
         ...edge,
         style: {
           ...edge.style,
           stroke: '#D3D3D3', // Default inactive color
+          strokeWidth: 1,    // Reset stroke width to 1
         },
+        animated: false,      // Reset animation to false
       }))
     );
   }, [setNodesState, setEdgesState]);
+  
 
   // BFS Function to color nodes and edges one by one
-  const colorNodesAndEdgesBFS = useCallback(() => {
+  // BFS Function to color nodes and edges one by one
+// BFS Function to color nodes and edges level by level
+const colorNodesAndEdgesBFS = useCallback(() => {
     let queue = ['node1']; // Start BFS from node1
     const visited = new Set();
-
+  
     // Clear any existing intervals
     if (animationIntervalRef.current) {
       clearInterval(animationIntervalRef.current);
     }
-
+  
     const interval = setInterval(() => {
       if (queue.length > 0) {
-        const currentNodeId = queue.shift(); // Dequeue the current node
-
-        // Color the current node
+        const currentLevel = [...queue]; // Get all nodes at the current level
+        queue = []; // Clear the queue for the next level
+  
+        // Color all nodes at the current level
         setNodesState((nds) =>
           nds.map((node) => {
-            if (node.id === currentNodeId) {
+            if (currentLevel.includes(node.id)) {
               visited.add(node.id); // Mark node as visited
               return {
                 ...node,
@@ -124,30 +142,37 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges }) => {
             return node;
           })
         );
-
-        // Find and color edges connected to the current node
-        setEdgesState((eds) =>
-          eds.map((edge) => {
-            if (edge.source === currentNodeId && !visited.has(edge.target)) {
-              queue.push(edge.target); // Enqueue the target node of the current edge
-              return {
-                ...edge,
-                style: {
-                  ...edge.style,
-                  stroke: '#00FF00', // Color the edge when active
-                },
-              };
-            }
-            return edge;
-          })
-        );
+  
+        // After a delay, color the edges connecting to the next level and enqueue next-level nodes
+        setTimeout(() => {
+          setEdgesState((eds) =>
+            eds.map((edge) => {
+              if (currentLevel.includes(edge.source) && !visited.has(edge.target)) {
+                queue.push(edge.target); // Enqueue the target node for the next level
+                return {
+                  ...edge,
+                  style: {
+                    ...edge.style,
+                    stroke: '#00FF00', // Color the edge when active
+                    strokeWidth: 10,   // Increase width
+                  },
+                  animated: true,      // Start animating the edge
+                };
+              }
+              return edge;
+            })
+          );
+        }, 500); // Add a delay for edge coloring after all nodes are colored
       } else {
         clearInterval(interval); // Stop when the queue is empty
       }
-    }, 500); // 500ms interval for each node/edge pair
-
+    }, 1000); // Process nodes and edges level-by-level every 1 second
+  
     animationIntervalRef.current = interval; // Store interval ID
   }, [setNodesState, setEdgesState]);
+  
+
+
 
   // Handle rerun animation button click
   const handleRerunAnimation = useCallback(() => {
