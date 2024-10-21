@@ -4,11 +4,15 @@ import './index.css';
 import App from './App';
 
 ReactDOM.render(<App />, document.getElementById('root'));
-// Suppress ResizeObserver error
-const resizeObserverErrHandler = (e) => {
-  if (e.message && e.message.includes('ResizeObserver loop completed with undelivered notifications')) {
-    e.preventDefault(); // Suppress the error
+
+// Suppress ResizeObserver errors
+const resizeObserverErrHandler = (err) => {
+  if (err.message && err.message.includes('ResizeObserver loop limit exceeded')) {
+    // Prevent error from showing up in the console
+    console.warn('Suppressed ResizeObserver loop limit exceeded error');
+    err.preventDefault();
   }
 };
 
 window.addEventListener('error', resizeObserverErrHandler);
+window.addEventListener('unhandledrejection', resizeObserverErrHandler);
