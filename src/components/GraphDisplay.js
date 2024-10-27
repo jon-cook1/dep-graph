@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useRef } from 'react';
+import React, { useEffect, useCallback, useRef, useState } from 'react';
 import ReactFlow, {
   useNodesState,
   useEdgesState,
@@ -57,12 +57,12 @@ const getLayoutedElements = (nodes, edges, direction = 'TB', ranker = 'network-s
   return { nodes: layoutedNodes, edges };
 };
 
-const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges }) => {
+const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order }) => {
   const [nodes, setNodesState, onNodesChange] = useNodesState([]);
   const [edges, setEdgesState, onEdgesChange] = useEdgesState([]);
   const { fitView } = useReactFlow();
+  const animationTimeoutRef = useRef([]); // Ref to store animation timeouts
   const [coloringStarted, setColoringStarted] = useState(false); // Track if coloring has started
-  const animationTimeoutRef = useRef([]); // To store timeouts for resetting
 
   // Update local state and layout when props change
   useEffect(() => {
@@ -79,134 +79,15 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges }) => {
     }
   }, [initialNodes, initialEdges, setNodesState, setEdgesState, fitView]);
 
-  // Reset all nodes and edges to base colors
-  const resetGraphColors = useCallback(() => {
-    // Clear any existing timeouts
-    animationTimeoutRef.current.forEach(clearTimeout);
-    animationTimeoutRef.current = [];
-
-    // Reset nodes to their base color
-    setNodesState((nds) =>
-      nds.map((node) => ({
-        ...node,
-        style: {
-          ...node.style,
-          background: '#D3D3D3', // Default inactive color
-        },
-      }))
-    );
-
-    // Reset edges to their base color, non-animated, and stroke width 1
-    setEdgesState((eds) =>
-      eds.map((edge) => ({
-        ...edge,
-        style: {
-          ...edge.style,
-          stroke: '#D3D3D3', // Default inactive color
-          strokeWidth: 1,    // Reset stroke width to 1
-        },
-        animated: false,      // Reset animation to false
-      }))
-    );
-  }, [setNodesState, setEdgesState]);
-
-  // DFS Function to color nodes and edges recursively
-  const colorNodesAndEdgesDFS = useCallback(() => {
-    const visitedNodes = new Set();
-    const visitedEdges = new Set();
-    let delay = 0;
-
-    // Clear any existing timeouts
-    animationTimeoutRef.current.forEach(clearTimeout);
-    animationTimeoutRef.current = [];
-
-    const dfsTraverse = (currentNodeId) => {
-      if (visitedNodes.has(currentNodeId)) return;
-
-      // Mark the node as visited and color it after a delay
-      animationTimeoutRef.current.push(
-        setTimeout(() => {
-          setNodesState((nds) =>
-            nds.map((node) => {
-              if (node.id === currentNodeId) {
-                return {
-                  ...node,
-                  style: {
-                    ...node.style,
-                    background: '#00FF00', // Color node when active
-                  },
-                };
-              }
-              return node;
-            })
-          );
-        }, delay)
-      );
-      visitedNodes.add(currentNodeId);
-      delay += 500; // Delay between node coloring
-
-      // Get all edges starting from the current node
-      const outgoingEdges = edges.filter(
-        (edge) => edge.source === currentNodeId && !visitedEdges.has(edge.id)
-      );
-
-      outgoingEdges.forEach((edge) => {
-        // Mark the edge as visited and color it after a delay
-        animationTimeoutRef.current.push(
-          setTimeout(() => {
-            setEdgesState((eds) =>
-              eds.map((ed) => {
-                if (ed.id === edge.id) {
-                  return {
-                    ...ed,
-                    style: {
-                      ...ed.style,
-                      stroke: '#00FF00', // Color edge when active
-                      strokeWidth: 10, // Increase width
-                    },
-                    animated: true, // Start animating the edge
-                  };
-                }
-                return ed;
-              })
-            );
-          }, delay)
-        );
-        visitedEdges.add(edge.id);
-        delay += 500; // Delay between edge coloring
-
-        // Recursively traverse the target node
-        dfsTraverse(edge.target);
-      });
-    };
-
-    // Start DFS from the first node
-    dfsTraverse('node1');
-  }, [edges, setNodesState, setEdgesState]);
-
-  // Handle rerun animation button click
-  const handleRerunAnimation = useCallback(() => {
-    resetGraphColors(); // Reset all colors first
-    setColoringStarted(false); // Allow the DFS to start again
-  }, [resetGraphColors]);
-
-  // Trigger the node and edge coloring after rendering
-  useEffect(() => {
-    if (nodes.length && edges.length && !coloringStarted) {
-      colorNodesAndEdgesDFS();
-      setColoringStarted(true); // Ensure DFS only starts once
-    }
-  }, [nodes, edges, colorNodesAndEdgesDFS, coloringStarted]);
-
   const onLayout = useCallback(
     (direction, ranker = 'network-simplex') => {
-      // Trigger layout twice to ensure correct formatting
+      // Simulate double-click for layout change
       const doubleClickLayout = () => {
         const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
           nodes,
           edges,
           direction,
-          ranker  // Apply the selected ranker
+          ranker
         );
         setNodesState(layoutedNodes);
         setEdgesState(layoutedEdges);
@@ -217,7 +98,7 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges }) => {
             nodes,
             edges,
             direction,
-            ranker  // Apply the selected ranker
+            ranker
           );
           setNodesState(reLayoutedNodes);
           setEdgesState(reLayoutedEdges);
@@ -229,6 +110,93 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges }) => {
     [nodes, edges, setNodesState, setEdgesState, fitView]
   );
 
+  const runColorAnimation = useCallback(() => {
+    if (!order || !order.length) return;
+  
+    // Clear any existing timeouts before starting a new animation
+    animationTimeoutRef.current.forEach(clearTimeout);
+    animationTimeoutRef.current = [];
+  
+    let delay = 0;
+  
+    // Iterate through the order list and apply colors one by one
+    order.forEach(([id, color], index) => {
+      animationTimeoutRef.current.push(
+        setTimeout(() => {
+          setNodesState((nds) =>
+            nds.map((node) => {
+              if (node.id === id) {
+                return {
+                  ...node,
+                  style: {
+                    ...node.style,
+                    background: color, // Set node color
+                  },
+                };
+              }
+              return node;
+            })
+          );
+  
+          setEdgesState((eds) =>
+            eds.map((edge) => {
+              if (edge.id === id) {
+                return {
+                  ...edge,
+                  animated: true, // Animate edge
+                  style: {
+                    ...edge.style,
+                    stroke: color, // Set edge color
+                    strokeWidth: 6, // Set edge thickness
+                  },
+                };
+              }
+              return edge;
+            })
+          );
+        }, delay)
+      );
+  
+      delay += 500; // Delay for each step in the animation (you can adjust this)
+    });
+  }, [order, setNodesState, setEdgesState]);  
+
+  // Trigger the color animation after rendering
+  useEffect(() => {
+    if (nodes.length && edges.length && !coloringStarted) {
+      runColorAnimation();
+      setColoringStarted(true);
+    }
+  }, [nodes, edges, runColorAnimation, coloringStarted]);
+
+  // Reset graph colors to default
+  const resetGraphColors = useCallback(() => {
+    // Clear any existing timeouts
+    animationTimeoutRef.current.forEach(clearTimeout);
+    animationTimeoutRef.current = [];
+
+    setNodesState((nds) =>
+      nds.map((node) => ({
+        ...node,
+        style: {
+          ...node.style,
+          background: '#D3D3D3', // Reset to default color
+        },
+      }))
+    );
+
+    setEdgesState((eds) =>
+      eds.map((edge) => ({
+        ...edge,
+        style: {
+          ...edge.style,
+          stroke: '#D3D3D3', // Reset to default color
+        },
+      }))
+    );
+
+    setColoringStarted(false); // Allow animation to start again
+  }, [setNodesState, setEdgesState]);
 
   // Inline style for buttons matching "Process Code" button
   const buttonStyle = {
@@ -251,7 +219,7 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges }) => {
         <button style={buttonStyle} onClick={() => onLayout('LR', 'network-simplex')}>
           Horizontal Layout
         </button>
-        <button style={buttonStyle} onClick={handleRerunAnimation}>
+        <button style={buttonStyle} onClick={resetGraphColors}>
           Rerun Animation
         </button>
       </div>

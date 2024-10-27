@@ -3,7 +3,7 @@ import './App.css';
 import CodeEditor from './components/CodeEditor';
 import GraphDisplay from './components/GraphDisplay';
 
-import { initialNodes, initialEdges } from './graphElements';
+import { initialNodes, initialEdges, order } from './graphElements';
 
 function App() {
   const [code, setCode] = useState('# Write your Python code here\n');
@@ -45,6 +45,7 @@ function App() {
         <GraphDisplay
           nodes={nodes}
           edges={edges}
+          order={order}
           setNodes={setNodes}
           setEdges={setEdges}
         />

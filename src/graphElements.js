@@ -10,7 +10,7 @@ export const initialNodes = [
       background: '#D3D3D3',
       color: '#000',
       border: '2px solid #000',
-      borderRadius: '10px',
+      borderRadius: '50px',
       boxShadow: '2px 2px 10px rgba(0, 0, 0, 0.2)',
       fontSize: '12px',
       padding: '10px',
@@ -24,7 +24,7 @@ export const initialNodes = [
       background: '#D3D3D3',
       color: '#000',
       border: '2px solid #000',
-      borderRadius: '10px',
+      borderRadius: '50px',
       padding: '10px',
       fontSize: '12px',
       boxShadow: '2px 2px 10px rgba(0, 0, 0, 0.2)',
@@ -38,7 +38,7 @@ export const initialNodes = [
       background: '#D3D3D3',
       color: '#000',
       border: '2px solid #000',
-      borderRadius: '10px',
+      borderRadius: '50px',
       padding: '10px',
       fontSize: '12px',
     },
@@ -51,7 +51,7 @@ export const initialNodes = [
       background: '#D3D3D3',
       color: '#000',
       border: '2px solid #000',
-      borderRadius: '10px',
+      borderRadius: '50px',
       padding: '10px',
       fontSize: '12px',
     },
@@ -64,7 +64,7 @@ export const initialNodes = [
       background: '#D3D3D3',
       color: '#000',
       border: '2px solid #000',
-      borderRadius: '10px',
+      borderRadius: '50px',
       padding: '10px',
       fontSize: '12px',
     },
@@ -77,7 +77,7 @@ export const initialNodes = [
       background: '#D3D3D3',
       color: '#000',
       border: '2px solid #000',
-      borderRadius: '10px',
+      borderRadius: '50px',
       padding: '10px',
       fontSize: '12px',
     },
@@ -90,7 +90,7 @@ export const initialNodes = [
       background: '#D3D3D3',
       color: '#000',
       border: '2px solid #000',
-      borderRadius: '10px',
+      borderRadius: '50px',
       padding: '10px',
       fontSize: '12px',
     },
@@ -103,7 +103,7 @@ export const initialNodes = [
       background: '#D3D3D3',
       color: '#000',
       border: '2px solid #000',
-      borderRadius: '10px',
+      borderRadius: '50px',
       padding: '10px',
       fontSize: '12px',
     },
@@ -116,7 +116,7 @@ export const initialNodes = [
       background: '#D3D3D3',
       color: '#000',
       border: '2px solid #000',
-      borderRadius: '10px',
+      borderRadius: '50px',
       padding: '10px',
       fontSize: '12px',
     },
@@ -130,7 +130,7 @@ export const initialNodes = [
       background: '#D3D3D3',
       color: '#000',
       border: '2px solid #000',
-      borderRadius: '10px',
+      borderRadius: '50px',
       padding: '10px',
       fontSize: '12px',
     },
@@ -144,7 +144,7 @@ export const initialNodes = [
       background: '#D3D3D3',
       color: '#000',
       border: '2px solid #000',
-      borderRadius: '10px',
+      borderRadius: '50px',
       padding: '10px',
       fontSize: '12px',
     },
@@ -243,11 +243,25 @@ export const initialEdges = [
     labelStyle: { fill: '#000', fontSize: '12px' },
   },
   {
-    id: 'connector3-8',
+    id: 'edge3-8',
     source: 'node3',
     target: 'node8',
     animated: false,
     type: 'smoothstep',
     style: { stroke: '#D3D3D3', strokeWidth: 1 },
   },
+];
+
+export const order = [
+  ['node1', '#FF0000'],  // Red
+  ['edge1-2', '#FF0000'],  // Red
+  ['node2', '#00FF00'],  // Green
+  ['edge2-3', '#00FF00'],  // Green
+  ['node3', '#0000FF'],  // Blue
+  ['edge3-8', '#0000FF'],  // Blue
+  ['node8', '#FFFF00'],  // Yellow
+  ['edge8-9', '#FFFF00'],  // Yellow
+  ['node9', '#FF00FF'],  // Magenta
+  ['edge9-10', '#FF00FF'],  // Magenta
+  ['node10', '#00FFFF'],  // Cyan
 ];
