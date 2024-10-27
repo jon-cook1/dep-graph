@@ -7,6 +7,7 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import dagre from 'dagre';
+import { applyStyles } from '../utils/GraphUtils'; // Import applyStyles from utils
 
 // Use Dagre library to format graph into tree
 const dagreGraph = new dagre.graphlib.Graph();
@@ -61,17 +62,18 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order }) => {
   const [nodes, setNodesState, onNodesChange] = useNodesState([]);
   const [edges, setEdgesState, onEdgesChange] = useEdgesState([]);
   const { fitView } = useReactFlow();
-  const animationTimeoutRef = useRef([]); // Ref to store animation timeouts
-  const [coloringStarted, setColoringStarted] = useState(false); // Track if coloring has started
+  const animationTimeoutRef = useRef([]);
+  const [coloringStarted, setColoringStarted] = useState(false);
 
   // Update local state and layout when props change
   useEffect(() => {
     if (initialNodes.length && initialEdges.length) {
+      const { styledNodes, styledEdges } = applyStyles(initialNodes, initialEdges); // Apply styles
       const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-        initialNodes,
-        initialEdges,
-        'TB',  // Default layout direction is vertical
-        'network-simplex'  // Default ranker
+        styledNodes,
+        styledEdges,
+        'TB',
+        'network-simplex'
       );
       setNodesState(layoutedNodes);
       setEdgesState(layoutedEdges);
@@ -81,7 +83,6 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order }) => {
 
   const onLayout = useCallback(
     (direction, ranker = 'network-simplex') => {
-      // Simulate double-click for layout change
       const doubleClickLayout = () => {
         const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
           nodes,
@@ -92,7 +93,7 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order }) => {
         setNodesState(layoutedNodes);
         setEdgesState(layoutedEdges);
         fitView();
-        // Trigger layout again
+
         setTimeout(() => {
           const { nodes: reLayoutedNodes, edges: reLayoutedEdges } = getLayoutedElements(
             nodes,
@@ -103,7 +104,7 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order }) => {
           setNodesState(reLayoutedNodes);
           setEdgesState(reLayoutedEdges);
           fitView();
-        }, 50); // Small delay for the second click effect
+        }, 50);
       };
       doubleClickLayout();
     },
@@ -112,14 +113,12 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order }) => {
 
   const runColorAnimation = useCallback(() => {
     if (!order || !order.length) return;
-  
-    // Clear any existing timeouts before starting a new animation
+
     animationTimeoutRef.current.forEach(clearTimeout);
     animationTimeoutRef.current = [];
-  
+
     let delay = 0;
-  
-    // Iterate through the order list and apply colors one by one
+
     order.forEach(([id, color], index) => {
       animationTimeoutRef.current.push(
         setTimeout(() => {
@@ -130,25 +129,25 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order }) => {
                   ...node,
                   style: {
                     ...node.style,
-                    background: color, // Set node color
-                  },
+                    background: color
+                  }
                 };
               }
               return node;
             })
           );
-  
+
           setEdgesState((eds) =>
             eds.map((edge) => {
               if (edge.id === id) {
                 return {
                   ...edge,
-                  animated: true, // Animate edge
+                  animated: true,
                   style: {
                     ...edge.style,
-                    stroke: color, // Set edge color
-                    strokeWidth: 6, // Set edge thickness
-                  },
+                    stroke: color,
+                    strokeWidth: 6
+                  }
                 };
               }
               return edge;
@@ -156,12 +155,11 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order }) => {
           );
         }, delay)
       );
-  
-      delay += 500; // Delay for each step in the animation (you can adjust this)
-    });
-  }, [order, setNodesState, setEdgesState]);  
 
-  // Trigger the color animation after rendering
+      delay += 500;
+    });
+  }, [order, setNodesState, setEdgesState]);
+
   useEffect(() => {
     if (nodes.length && edges.length && !coloringStarted) {
       runColorAnimation();
@@ -169,9 +167,7 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order }) => {
     }
   }, [nodes, edges, runColorAnimation, coloringStarted]);
 
-  // Reset graph colors to default
   const resetGraphColors = useCallback(() => {
-    // Clear any existing timeouts
     animationTimeoutRef.current.forEach(clearTimeout);
     animationTimeoutRef.current = [];
 
@@ -180,8 +176,8 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order }) => {
         ...node,
         style: {
           ...node.style,
-          background: '#D3D3D3', // Reset to default color
-        },
+          background: '#D3D3D3'
+        }
       }))
     );
 
@@ -190,15 +186,14 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order }) => {
         ...edge,
         style: {
           ...edge.style,
-          stroke: '#D3D3D3', // Reset to default color
-        },
+          stroke: '#D3D3D3'
+        }
       }))
     );
 
-    setColoringStarted(false); // Allow animation to start again
+    setColoringStarted(false);
   }, [setNodesState, setEdgesState]);
 
-  // Inline style for buttons matching "Process Code" button
   const buttonStyle = {
     padding: '10px 20px',
     margin: '5px',
@@ -207,7 +202,7 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order }) => {
     border: 'none',
     borderRadius: '5px',
     cursor: 'pointer',
-    fontSize: '16px',
+    fontSize: '16px'
   };
 
   return (
@@ -234,10 +229,4 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order }) => {
   );
 };
 
-const GraphDisplayWrapper = (props) => (
-  <ReactFlowProvider>
-    <GraphDisplay {...props} />
-  </ReactFlowProvider>
-);
-
-export default GraphDisplayWrapper;
+export default GraphDisplay;

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import './App.css';
 import CodeEditor from './components/CodeEditor';
 import GraphDisplay from './components/GraphDisplay';
-
+import { ReactFlowProvider } from 'reactflow'; // Import ReactFlowProvider
 import { initialNodes, initialEdges, order } from './graphElements';
 
 function App() {
@@ -42,13 +42,15 @@ function App() {
         <CodeEditor code={code} setCode={setCode} />
       </div>
       <div className="graph-section">
-        <GraphDisplay
-          nodes={nodes}
-          edges={edges}
-          order={order}
-          setNodes={setNodes}
-          setEdges={setEdges}
-        />
+        <ReactFlowProvider>
+          <GraphDisplay
+            nodes={nodes}
+            edges={edges}
+            order={order}
+            setNodes={setNodes}
+            setEdges={setEdges}
+          />
+        </ReactFlowProvider>
       </div>
     </div>
   );
