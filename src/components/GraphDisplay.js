@@ -6,43 +6,7 @@ import ReactFlow, {
   useReactFlow,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import ELK from 'elkjs'; // Import ELK for graph layout
 import { applyStyles } from '../utils/GraphUtils'; // Import applyStyles from utils
-
-const elk = new ELK();
-
-// Function to get ELK layout
-const getElkLayout = async (nodes, edges, direction = 'DOWN') => {
-  const graph = {
-    id: 'root',
-    layoutOptions: {
-      'elk.algorithm': 'mrtree', // Use the "mrtree" algorithm for shortest path-like organization
-      'elk.direction': direction, // 'DOWN' for top-down, 'RIGHT' for left-to-right
-      'elk.spacing.nodeNode': '50',  // Space between nodes
-      'elk.spacing.edgeNode': '50',  // Space between edges and nodes
-      'elk.spacing.edgeEdge': '50',  // Space between edges
-    },
-    children: nodes.map((node) => ({
-      id: node.id,
-      width: 100,  // Node width
-      height: 100,  // Node height
-    })),
-    edges: edges.map((edge) => ({
-      id: edge.id,
-      sources: [edge.source],
-      targets: [edge.target],
-    })),
-  };
-
-  const layout = await elk.layout(graph);
-  const layoutedNodes = layout.children.map((node, index) => ({
-    ...nodes[index],
-    position: { x: node.x, y: node.y },
-  }));
-
-  return { layoutedNodes, edges };
-};
-
 
 const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order }) => {
   const [nodes, setNodesState, onNodesChange] = useNodesState([]);
@@ -51,26 +15,23 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order }) => {
   const animationTimeoutRef = useRef([]);
   const [coloringStarted, setColoringStarted] = useState(false);
 
-  // Update local state and layout when props change
+  // Update local state and manually position nodes when props change
   useEffect(() => {
     if (initialNodes.length && initialEdges.length) {
       const { styledNodes, styledEdges } = applyStyles(initialNodes, initialEdges); // Apply styles
-
-      getElkLayout(styledNodes, styledEdges, 'TB').then(({ layoutedNodes, edges: layoutedEdges }) => {
-        setNodesState(layoutedNodes);
-        setEdgesState(layoutedEdges);
-        fitView();
-      });
+      // Set directly styled nodes and edges with manual positions
+      setNodesState(styledNodes);
+      setEdgesState(styledEdges);
+      fitView();
     }
   }, [initialNodes, initialEdges, setNodesState, setEdgesState, fitView]);
 
   const onLayout = useCallback(
     (direction) => {
-      getElkLayout(nodes, edges, direction).then(({ layoutedNodes, edges: layoutedEdges }) => {
-        setNodesState(layoutedNodes);
-        setEdgesState(layoutedEdges);
-        fitView();
-      });
+      // No need to perform layout, as we use fixed positioning
+      setNodesState(nodes);
+      setEdgesState(edges);
+      fitView();
     },
     [nodes, edges, setNodesState, setEdgesState, fitView]
   );
