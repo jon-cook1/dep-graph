@@ -6,57 +6,43 @@ import ReactFlow, {
   useReactFlow,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import dagre from 'dagre';
+import ELK from 'elkjs'; // Import ELK for graph layout
 import { applyStyles } from '../utils/GraphUtils'; // Import applyStyles from utils
 
-// Use Dagre library to format graph into tree
-const dagreGraph = new dagre.graphlib.Graph();
-dagreGraph.setDefaultEdgeLabel(() => ({}));
+const elk = new ELK();
 
-const nodeWidth = 150;
-const nodeHeight = 50;
+// Function to get ELK layout
+const getElkLayout = async (nodes, edges, direction = 'DOWN') => {
+  const graph = {
+    id: 'root',
+    layoutOptions: {
+      'elk.algorithm': 'mrtree', // Use the "mrtree" algorithm for shortest path-like organization
+      'elk.direction': direction, // 'DOWN' for top-down, 'RIGHT' for left-to-right
+      'elk.spacing.nodeNode': '50',  // Space between nodes
+      'elk.spacing.edgeNode': '50',  // Space between edges and nodes
+      'elk.spacing.edgeEdge': '50',  // Space between edges
+    },
+    children: nodes.map((node) => ({
+      id: node.id,
+      width: 100,  // Node width
+      height: 100,  // Node height
+    })),
+    edges: edges.map((edge) => ({
+      id: edge.id,
+      sources: [edge.source],
+      targets: [edge.target],
+    })),
+  };
 
-const getLayoutedElements = (nodes, edges, direction = 'TB', ranker = 'network-simplex') => {
-  const isHorizontal = direction === 'LR';
+  const layout = await elk.layout(graph);
+  const layoutedNodes = layout.children.map((node, index) => ({
+    ...nodes[index],
+    position: { x: node.x, y: node.y },
+  }));
 
-  // Set graph with ranker and direction
-  dagreGraph.setGraph({
-    rankdir: direction,
-    ranker: ranker,
-    nodesep: 50,  // Node separation
-    ranksep: 70,  // Rank separation
-  });
-
-  // Add nodes to the graph
-  nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, {
-      width: nodeWidth,
-      height: nodeHeight,
-    });
-  });
-
-  // Add edges to the graph
-  edges.forEach((edge) => {
-    dagreGraph.setEdge(edge.source, edge.target);
-  });
-
-  // Compute the layout
-  dagre.layout(dagreGraph);
-
-  // Apply the computed positions to the nodes
-  const layoutedNodes = nodes.map((node) => {
-    const nodeWithPosition = dagreGraph.node(node.id);
-    node.position = {
-      x: nodeWithPosition.x - nodeWidth / 2,
-      y: nodeWithPosition.y - nodeHeight / 2,
-    };
-    node.targetPosition = isHorizontal ? 'left' : 'top';
-    node.sourcePosition = isHorizontal ? 'right' : 'bottom';
-    return node;
-  });
-
-  return { nodes: layoutedNodes, edges };
+  return { layoutedNodes, edges };
 };
+
 
 const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order }) => {
   const [nodes, setNodesState, onNodesChange] = useNodesState([]);
@@ -69,44 +55,22 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order }) => {
   useEffect(() => {
     if (initialNodes.length && initialEdges.length) {
       const { styledNodes, styledEdges } = applyStyles(initialNodes, initialEdges); // Apply styles
-      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-        styledNodes,
-        styledEdges,
-        'TB',
-        'network-simplex'
-      );
-      setNodesState(layoutedNodes);
-      setEdgesState(layoutedEdges);
-      fitView();
+
+      getElkLayout(styledNodes, styledEdges, 'TB').then(({ layoutedNodes, edges: layoutedEdges }) => {
+        setNodesState(layoutedNodes);
+        setEdgesState(layoutedEdges);
+        fitView();
+      });
     }
   }, [initialNodes, initialEdges, setNodesState, setEdgesState, fitView]);
 
   const onLayout = useCallback(
-    (direction, ranker = 'network-simplex') => {
-      const doubleClickLayout = () => {
-        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-          nodes,
-          edges,
-          direction,
-          ranker
-        );
+    (direction) => {
+      getElkLayout(nodes, edges, direction).then(({ layoutedNodes, edges: layoutedEdges }) => {
         setNodesState(layoutedNodes);
         setEdgesState(layoutedEdges);
         fitView();
-
-        setTimeout(() => {
-          const { nodes: reLayoutedNodes, edges: reLayoutedEdges } = getLayoutedElements(
-            nodes,
-            edges,
-            direction,
-            ranker
-          );
-          setNodesState(reLayoutedNodes);
-          setEdgesState(reLayoutedEdges);
-          fitView();
-        }, 50);
-      };
-      doubleClickLayout();
+      });
     },
     [nodes, edges, setNodesState, setEdgesState, fitView]
   );
@@ -208,10 +172,10 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order }) => {
   return (
     <div className="graph-display">
       <div className="layout-buttons">
-        <button style={buttonStyle} onClick={() => onLayout('TB', 'network-simplex')}>
+        <button style={buttonStyle} onClick={() => onLayout('TB')}>
           Vertical Layout
         </button>
-        <button style={buttonStyle} onClick={() => onLayout('LR', 'network-simplex')}>
+        <button style={buttonStyle} onClick={() => onLayout('LR')}>
           Horizontal Layout
         </button>
         <button style={buttonStyle} onClick={resetGraphColors}>
