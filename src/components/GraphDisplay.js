@@ -2,7 +2,6 @@ import React, { useEffect, useCallback, useRef, useState } from 'react';
 import ReactFlow, {
   useNodesState,
   useEdgesState,
-  ReactFlowProvider,
   useReactFlow,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
@@ -19,22 +18,11 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order }) => {
   useEffect(() => {
     if (initialNodes.length && initialEdges.length) {
       const { styledNodes, styledEdges } = applyStyles(initialNodes, initialEdges); // Apply styles
-      // Set directly styled nodes and edges with manual positions
       setNodesState(styledNodes);
       setEdgesState(styledEdges);
       fitView();
     }
   }, [initialNodes, initialEdges, setNodesState, setEdgesState, fitView]);
-
-  const onLayout = useCallback(
-    (direction) => {
-      // No need to perform layout, as we use fixed positioning
-      setNodesState(nodes);
-      setEdgesState(edges);
-      fitView();
-    },
-    [nodes, edges, setNodesState, setEdgesState, fitView]
-  );
 
   const runColorAnimation = useCallback(() => {
     if (!order || !order.length) return;
@@ -54,8 +42,8 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order }) => {
                   ...node,
                   style: {
                     ...node.style,
-                    background: color
-                  }
+                    background: color,
+                  },
                 };
               }
               return node;
@@ -71,8 +59,8 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order }) => {
                   style: {
                     ...edge.style,
                     stroke: color,
-                    strokeWidth: 6
-                  }
+                    strokeWidth: 6,
+                  },
                 };
               }
               return edge;
@@ -101,8 +89,8 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order }) => {
         ...node,
         style: {
           ...node.style,
-          background: '#D3D3D3'
-        }
+          background: '#D3D3D3',
+        },
       }))
     );
 
@@ -111,8 +99,8 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order }) => {
         ...edge,
         style: {
           ...edge.style,
-          stroke: '#D3D3D3'
-        }
+          stroke: '#D3D3D3',
+        },
       }))
     );
 
@@ -127,18 +115,12 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order }) => {
     border: 'none',
     borderRadius: '5px',
     cursor: 'pointer',
-    fontSize: '16px'
+    fontSize: '16px',
   };
 
   return (
     <div className="graph-display">
-      <div className="layout-buttons">
-        <button style={buttonStyle} onClick={() => onLayout('TB')}>
-          Vertical Layout
-        </button>
-        <button style={buttonStyle} onClick={() => onLayout('LR')}>
-          Horizontal Layout
-        </button>
+      <div style={{ marginBottom: '10px' }}>
         <button style={buttonStyle} onClick={resetGraphColors}>
           Rerun Animation
         </button>
