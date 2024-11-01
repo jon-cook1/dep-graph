@@ -219,9 +219,6 @@ export const initialEdges = [
 
 // Animation order remains unchanged
 export const order = [
-  ['node10', '#FF0000'],  // pi (Red)
-  ['edge10-13', '#FF0000'],  // pi -> circle_area (Red)
-  ['node13', '#FF0000'],  // circle_area (Red)
 
   ['node7', '#FFFF00'],  // total_plants (Yellow)
   ['edge5-7', '#FFFF00'],  // circle_plants -> total_plants (Yellow)
@@ -231,18 +228,31 @@ export const order = [
   ['edge13-5', '#FFFF00'],
   ['edge13-6', '#FFFF00'],
 
-  ['node13', '#FF9900'],  // circle_area (Orange)
+  ['node13', '#FFFF00'],  // circle_area (Yellow)
+  ['edge10-13', '#FFFF00'],  // pi -> circle_area (Yellow)
+  ['node10', '#FFFF00'],  // pi (Yellow)
 
   ['node8', '#0000FF'],  // total_soil (Blue)
   ['edge11-8', '#0000FF'],  // circle_soil -> total_soil (Blue)
   ['node11', '#0000FF'],  // circle_soil (Blue)
   ['edge13-11', '#0000FF'],
-  ['node13', '#804D80'],  // circle_area (Blue/Orange combined)
+
+  ['node13', '#FF0000'],  // circle_area Red
+  ['edge10-13', '#FF0000'],  // pi -> circle_area (Red)
+  ['node10', '#FF0000'],  // pi (Red)
+
+  ['edge13-5', '#000000'],
+  ['edge13-6', '#000000'],
+  ['edge13-11', '#000000'],
 
   ['node9', '#00FF00'],  // total_fill (Green)
   ['edge12-9', '#00FF00'],  // fill_area -> total_fill (Green)
   ['node12', '#00FF00'],  // fill_area (Green)
   ['edge13-12', '#00FF00'],
+  ['edge13-12', '#000000'],
 
-  ['node13', '#408040'],  // circle_area (Blue/Orange/Green combined)
+
+  ['node13', '#FF0000'],  // circle_area (Red)
+  ['edge10-13', '#FF0000'],  // pi -> circle_area (Red)
+  ['node10', '#FF0000'],  // pi (Red)
 ];
