@@ -69,7 +69,7 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order }) => {
         }, delay)
       );
 
-      delay += 500;
+      delay += 1000;
     });
   }, [order, setNodesState, setEdgesState]);
 
