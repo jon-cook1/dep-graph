@@ -54,13 +54,14 @@ export const nodeStyles = {
     passing: {
       stroke: '#FF9900',
       strokeWidth: 3,
-      animated: true,
+      animated: false,
+      type: 'straight',
       color: '#000000',  // Black text color for edges
     },
     internal: {
-      stroke: '#00FFCC',
-      strokeWidth: 2,
+      strokeWidth: 1,
       animated: false,
+      type: 'straight',
       color: '#000000',  // Black text color for edges
     }
   };
