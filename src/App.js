@@ -2,8 +2,11 @@ import React, { useState } from 'react';
 import './App.css';
 import CodeEditor from './components/CodeEditor';
 import GraphDisplay from './components/GraphDisplay';
-import { ReactFlowProvider } from 'reactflow'; // Import ReactFlowProvider
+import { ReactFlowProvider } from 'reactflow';
 import { initialNodes, initialEdges, order } from './graphElements';
+
+// Toggle between hardcoded data and API
+const USE_API = true;  // Set to true for API data, false for hardcoded data
 
 function App() {
   const [code, setCode] = useState('# Write your Python code here\n');
@@ -11,26 +14,24 @@ function App() {
   const [edges, setEdges] = useState([]);
 
   const handleProcessCode = async () => {
-    // For development purposes, use hardcoded data
-    setNodes(initialNodes);
-    setEdges(initialEdges);
-
-    // TODO: Uncomment to connect to backend
-    /*
-    try {
-      const response = await fetch('http://your-backend-endpoint', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code }),
-      });
-      const data = await response.json();
-      setNodes(data.nodes);
-      setEdges(data.edges);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      // Optionally, display an error message to the user
+    if (USE_API) {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/endpoint/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ source: code }),
+        });
+        const data = await response.json();
+        setNodes(data.nodes);
+        setEdges(data.edges);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    } else {
+      // Use hardcoded data
+      setNodes(initialNodes);
+      setEdges(initialEdges);
     }
-    */
   };
 
   return (
