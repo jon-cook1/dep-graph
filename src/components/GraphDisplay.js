@@ -1,23 +1,20 @@
-import React, { useEffect, useCallback, useRef, useState } from 'react';
-import ReactFlow, {
-  useNodesState,
-  useEdgesState,
-  useReactFlow,
-} from 'reactflow';
+// GraphDisplay.js
+
+import React, { useEffect, useCallback, useRef, useState, forwardRef, useImperativeHandle } from 'react';
+import ReactFlow, { useNodesState, useEdgesState, useReactFlow } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { applyStyles } from '../utils/GraphUtils';
 import ace from 'ace-builds';
 
-const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order, editorRef }) => {
+const GraphDisplay = forwardRef(({ nodes: initialNodes, edges: initialEdges, order, editorRef }, ref) => {
   const [nodes, setNodesState, onNodesChange] = useNodesState([]);
   const [edges, setEdgesState, onEdgesChange] = useEdgesState([]);
   const { fitView } = useReactFlow();
   const animationTimeoutRef = useRef([]);
   const [coloringStarted, setColoringStarted] = useState(false);
-  const markerIdsRef = useRef([]); // Store marker IDs here
-  const colorClassesRef = useRef(new Map()); // Map to store color classes
+  const markerIdsRef = useRef([]);
+  const colorClassesRef = useRef(new Map());
 
-  // Function to create a unique CSS class for each color
   const createColorClass = (color) => {
     if (!colorClassesRef.current.has(color)) {
       const className = `highlight-${color.replace('#', '')}`;
@@ -25,7 +22,7 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order, editorR
       style.innerHTML = `
         .${className} {
           position: absolute;
-          background: ${color}40; /* Use transparency */
+          background: ${color}40;
           z-index: 20;
         }
       `;
@@ -34,31 +31,20 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order, editorR
     }
     return colorClassesRef.current.get(color);
   };
-  
 
   const highlightCodeLines = useCallback((lineNumbers, color) => {
     if (editorRef.current && editorRef.current.editor) {
       const session = editorRef.current.editor.getSession();
       const Range = ace.require('ace/range').Range;
-  
-      // Get the CSS class for the specified color
+
       const colorClass = createColorClass(color);
-  
-      lineNumbers.forEach(line => {
-        // Add a marker for each line without clearing existing markers
-        const markerId = session.addMarker(
-          new Range(line - 1, 0, line - 1, 1),
-          colorClass,
-          'fullLine'
-        );
-        markerIdsRef.current.push(markerId); // Track each marker
-        console.log(`Persistently highlighting line ${line} with color ${color}`);
+
+      lineNumbers.forEach((line) => {
+        const markerId = session.addMarker(new Range(line - 1, 0, line - 1, 1), colorClass, 'fullLine');
+        markerIdsRef.current.push(markerId);
       });
-    } else {
-      console.warn('editorRef.current.editor is not available');
     }
   }, [editorRef]);
-  
 
   useEffect(() => {
     if (initialNodes.length && initialEdges.length) {
@@ -77,7 +63,7 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order, editorR
 
     let delay = 0;
 
-    order.forEach(([id, color], index) => {
+    order.forEach(([id, color]) => {
       animationTimeoutRef.current.push(
         setTimeout(() => {
           setNodesState((nds) =>
@@ -115,9 +101,45 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order, editorR
         }, delay)
       );
 
-      delay += 500; // Increase delay to allow time for highlighting each step
+      delay += 500;
     });
   }, [order, setNodesState, setEdgesState, highlightCodeLines]);
+
+  // Use `useImperativeHandle` to expose `resetGraphColors` to parent component via `ref`
+  useImperativeHandle(ref, () => ({
+    resetGraphColors() {
+      animationTimeoutRef.current.forEach(clearTimeout);
+      animationTimeoutRef.current = [];
+
+      setNodesState((nds) =>
+        nds.map((node) => ({
+          ...node,
+          style: {
+            ...node.style,
+            background: '#D3D3D3',
+          },
+        }))
+      );
+
+      setEdgesState((eds) =>
+        eds.map((edge) => ({
+          ...edge,
+          style: {
+            ...edge.style,
+            stroke: '#D3D3D3',
+          },
+        }))
+      );
+
+      setColoringStarted(false);
+
+      if (editorRef.current && editorRef.current.editor && editorRef.current.editor.getSession()) {
+        const session = editorRef.current.editor.getSession();
+        markerIdsRef.current.forEach((markerId) => session.removeMarker(markerId));
+        markerIdsRef.current = [];
+      }
+    },
+  }));
 
   useEffect(() => {
     if (nodes.length && edges.length && !coloringStarted) {
@@ -126,66 +148,11 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order, editorR
     }
   }, [nodes, edges, runColorAnimation, coloringStarted]);
 
-  const resetGraphColors = useCallback(() => {
-    animationTimeoutRef.current.forEach(clearTimeout);
-    animationTimeoutRef.current = [];
-
-    setNodesState((nds) =>
-      nds.map((node) => ({
-        ...node,
-        style: {
-          ...node.style,
-          background: '#D3D3D3',
-        },
-      }))
-    );
-
-    setEdgesState((eds) =>
-      eds.map((edge) => ({
-        ...edge,
-        style: {
-          ...edge.style,
-          stroke: '#D3D3D3',
-        },
-      }))
-    );
-
-    setColoringStarted(false);
-
-    if (editorRef.current && editorRef.current.editor && editorRef.current.editor.getSession()) {
-      const session = editorRef.current.editor.getSession();
-      markerIdsRef.current.forEach(markerId => session.removeMarker(markerId));
-      markerIdsRef.current = []; // Clear marker IDs
-    }
-  }, [setNodesState, setEdgesState, editorRef]);
-
-  const buttonStyle = {
-    padding: '10px 20px',
-    margin: '5px',
-    backgroundColor: '#007BFF',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    fontSize: '16px',
-  };
-
   return (
     <div className="graph-display">
-      <div style={{ marginBottom: '10px' }}>
-        <button style={buttonStyle} onClick={resetGraphColors}>
-          Rerun Animation
-        </button>
-      </div>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        fitView
-      />
+      <ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} fitView />
     </div>
   );
-};
+});
 
 export default GraphDisplay;

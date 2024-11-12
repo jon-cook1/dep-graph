@@ -1,58 +1,78 @@
+// App.js
+
 import React, { useState, useRef } from 'react';
 import './App.css';
+import ButtonPanel from './components/ButtonPanel';
 import CodeEditor from './components/CodeEditor';
 import GraphDisplay from './components/GraphDisplay';
 import { ReactFlowProvider } from 'reactflow';
 import { initialNodes, initialEdges, order } from './graphElements';
 
 function App() {
-  const [code, setCode] = useState('# Write your Python code here\n');
+  const [buffers, setBuffers] = useState({
+    Original: '# Write your Python code here\n',
+    Decomposed: '',
+  });
+  const [activeTab, setActiveTab] = useState('Original');
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
-  const editorRef = useRef(null); // Initialize editorRef
+  
+  const editorRef = useRef(null); // Ref for the CodeEditor
+  const graphDisplayRef = useRef(null); // Ref for GraphDisplay to access resetGraphColors
 
-  const handleProcessCode = async () => {
-    // For development purposes, use hardcoded data
+  const handleProcessCode = () => {
+    const decomposedContent = `# Decomposed code based on ${buffers.Original}`;
+    setBuffers((prevBuffers) => ({
+      ...prevBuffers,
+      Decomposed: decomposedContent,
+    }));
     setNodes(initialNodes);
     setEdges(initialEdges);
+  };
 
-    // TODO: Uncomment to connect to backend
-    /*
-    try {
-      const response = await fetch('http://your-backend-endpoint', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code }),
-      });
-      const data = await response.json();
-      setNodes(data.nodes);
-      setEdges(data.edges);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      // Optionally, display an error message to the user
+  const handleRerunAnimation = () => {
+    if (graphDisplayRef.current) {
+      graphDisplayRef.current.resetGraphColors();
     }
-    */
   };
 
   return (
     <div className="app-container">
-      <div className="editor-section">
-        <button className="process-button" onClick={handleProcessCode}>
-          Process Code
-        </button>
-        <CodeEditor code={code} setCode={setCode} editorRef={editorRef} />
-      </div>
-      <div className="graph-section">
-        <ReactFlowProvider>
-          <GraphDisplay
-            nodes={nodes}
-            edges={edges}
-            order={order}
-            editorRef={editorRef} // Pass editorRef to GraphDisplay
-            setNodes={setNodes}
-            setEdges={setEdges}
+      {/* Place ButtonPanel at the top, spanning full width */}
+      <ButtonPanel
+        onProcessCode={handleProcessCode}
+        onTabChange={setActiveTab}
+        activeTab={activeTab}
+        onRerunAnimation={handleRerunAnimation}
+      />
+
+      <div className="content-container">
+        <div className="editor-section">
+          <CodeEditor
+            code={buffers[activeTab]}
+            setCode={(newCode) =>
+              setBuffers((prevBuffers) => ({
+                ...prevBuffers,
+                [activeTab]: newCode,
+              }))
+            }
+            editorRef={editorRef}
           />
-        </ReactFlowProvider>
+        </div>
+
+        <div className="graph-section">
+          <ReactFlowProvider>
+            <GraphDisplay
+              ref={graphDisplayRef} // Attach ref to GraphDisplay for resetGraphColors access
+              nodes={nodes}
+              edges={edges}
+              order={order}
+              editorRef={editorRef}
+              setNodes={setNodes}
+              setEdges={setEdges}
+            />
+          </ReactFlowProvider>
+        </div>
       </div>
     </div>
   );
