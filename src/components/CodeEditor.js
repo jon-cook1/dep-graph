@@ -4,9 +4,8 @@ import AceEditor from 'react-ace';
 import 'ace-builds/src-noconflict/mode-python';
 import 'ace-builds/src-noconflict/theme-monokai';
 
-const CodeEditor = ({ code, setCode }) => {
+const CodeEditor = ({ code, setCode, editorRef }) => {
   
-  // Load code from localStorage when the component mounts
   useEffect(() => {
     const savedCode = localStorage.getItem('student_code');
     if (savedCode) {
@@ -14,7 +13,6 @@ const CodeEditor = ({ code, setCode }) => {
     }
   }, [setCode]);
 
-  // Save code to localStorage
   const handleCodeChange = (newCode) => {
     setCode(newCode);
     localStorage.setItem('student_code', newCode);
@@ -31,10 +29,11 @@ const CodeEditor = ({ code, setCode }) => {
         width="100%"
         height="100%"
         fontSize={14}
+        ref={editorRef} // Attach editorRef directly to AceEditor
         setOptions={{
           showLineNumbers: true,
           tabSize: 4,
-          useWorker: false, // Disable syntax checking
+          useWorker: false,
         }}
       />
     </div>

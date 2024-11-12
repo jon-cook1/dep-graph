@@ -5,19 +5,64 @@ import ReactFlow, {
   useReactFlow,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { applyStyles } from '../utils/GraphUtils'; // Import applyStyles from utils
+import { applyStyles } from '../utils/GraphUtils';
+import ace from 'ace-builds';
 
-const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order }) => {
+const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order, editorRef }) => {
   const [nodes, setNodesState, onNodesChange] = useNodesState([]);
   const [edges, setEdgesState, onEdgesChange] = useEdgesState([]);
   const { fitView } = useReactFlow();
   const animationTimeoutRef = useRef([]);
   const [coloringStarted, setColoringStarted] = useState(false);
+  const markerIdsRef = useRef([]); // Store marker IDs here
+  const colorClassesRef = useRef(new Map()); // Map to store color classes
 
-  // Update local state and manually position nodes when props change
+  // Function to create a unique CSS class for each color
+  const createColorClass = (color) => {
+    if (!colorClassesRef.current.has(color)) {
+      const className = `highlight-${color.replace('#', '')}`;
+      const style = document.createElement('style');
+      style.innerHTML = `
+        .${className} {
+          position: absolute;
+          background: ${color}40; /* Use transparency */
+          z-index: 20;
+        }
+      `;
+      document.head.appendChild(style);
+      colorClassesRef.current.set(color, className);
+    }
+    return colorClassesRef.current.get(color);
+  };
+  
+
+  const highlightCodeLines = useCallback((lineNumbers, color) => {
+    if (editorRef.current && editorRef.current.editor) {
+      const session = editorRef.current.editor.getSession();
+      const Range = ace.require('ace/range').Range;
+  
+      // Get the CSS class for the specified color
+      const colorClass = createColorClass(color);
+  
+      lineNumbers.forEach(line => {
+        // Add a marker for each line without clearing existing markers
+        const markerId = session.addMarker(
+          new Range(line - 1, 0, line - 1, 1),
+          colorClass,
+          'fullLine'
+        );
+        markerIdsRef.current.push(markerId); // Track each marker
+        console.log(`Persistently highlighting line ${line} with color ${color}`);
+      });
+    } else {
+      console.warn('editorRef.current.editor is not available');
+    }
+  }, [editorRef]);
+  
+
   useEffect(() => {
     if (initialNodes.length && initialEdges.length) {
-      const { styledNodes, styledEdges } = applyStyles(initialNodes, initialEdges); // Apply styles
+      const { styledNodes, styledEdges } = applyStyles(initialNodes, initialEdges);
       setNodesState(styledNodes);
       setEdgesState(styledEdges);
       fitView();
@@ -38,6 +83,7 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order }) => {
           setNodesState((nds) =>
             nds.map((node) => {
               if (node.id === id) {
+                highlightCodeLines(node.code_lines || [], color);
                 return {
                   ...node,
                   style: {
@@ -69,9 +115,9 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order }) => {
         }, delay)
       );
 
-      delay += 500;
+      delay += 500; // Increase delay to allow time for highlighting each step
     });
-  }, [order, setNodesState, setEdgesState]);
+  }, [order, setNodesState, setEdgesState, highlightCodeLines]);
 
   useEffect(() => {
     if (nodes.length && edges.length && !coloringStarted) {
@@ -105,7 +151,13 @@ const GraphDisplay = ({ nodes: initialNodes, edges: initialEdges, order }) => {
     );
 
     setColoringStarted(false);
-  }, [setNodesState, setEdgesState]);
+
+    if (editorRef.current && editorRef.current.editor && editorRef.current.editor.getSession()) {
+      const session = editorRef.current.editor.getSession();
+      markerIdsRef.current.forEach(markerId => session.removeMarker(markerId));
+      markerIdsRef.current = []; // Clear marker IDs
+    }
+  }, [setNodesState, setEdgesState, editorRef]);
 
   const buttonStyle = {
     padding: '10px 20px',

@@ -69,12 +69,12 @@ export const nodeStyles = {
   export const applyStyles = (nodes, edges) => {
     const styledNodes = nodes.map((node) => ({
       ...node,
-      style: nodeStyles[node.type] || {},
+      style: nodeStyles[node.mytype] || {},
     }));
   
     const styledEdges = edges.map((edge) => ({
       ...edge,
-      style: edgeStyles[edge.type] || {},
+      style: edgeStyles[edge.mytype] || {},
     }));
   
     return { styledNodes, styledEdges };

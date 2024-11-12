@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import './App.css';
 import CodeEditor from './components/CodeEditor';
 import GraphDisplay from './components/GraphDisplay';
-import { ReactFlowProvider } from 'reactflow'; // Import ReactFlowProvider
+import { ReactFlowProvider } from 'reactflow';
 import { initialNodes, initialEdges, order } from './graphElements';
 
 function App() {
   const [code, setCode] = useState('# Write your Python code here\n');
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
+  const editorRef = useRef(null); // Initialize editorRef
 
   const handleProcessCode = async () => {
     // For development purposes, use hardcoded data
@@ -39,7 +40,7 @@ function App() {
         <button className="process-button" onClick={handleProcessCode}>
           Process Code
         </button>
-        <CodeEditor code={code} setCode={setCode} />
+        <CodeEditor code={code} setCode={setCode} editorRef={editorRef} />
       </div>
       <div className="graph-section">
         <ReactFlowProvider>
@@ -47,6 +48,7 @@ function App() {
             nodes={nodes}
             edges={edges}
             order={order}
+            editorRef={editorRef} // Pass editorRef to GraphDisplay
             setNodes={setNodes}
             setEdges={setEdges}
           />

@@ -3,104 +3,117 @@ export const initialNodes = [
   // Input nodes
   {
     id: 'node1',
-    type: 'custominput',
+    mytype: 'custominput',
     data: { label: 'side_length' },
     position: { x: 100, y: 100 },  // Leftmost node
     style: { borderRadius: '50%', width: 100, height: 100 },  // Circular shape
+    code_lines: [2],
   },
   {
     id: 'node2',
-    type: 'custominput',
+    mytype: 'custominput',
     data: { label: 'plant_spacing' },
     position: { x: 250, y: 100 },  // Next to side_length
     style: { borderRadius: '50%', width: 100, height: 100 },  // Circular shape
+    code_lines: [3],
   },
   {
     id: 'node3',
-    type: 'custominput',
+    mytype: 'custominput',
     data: { label: 'soil_depth' },
     position: { x: 400, y: 100 },  // Next to plant_spacing
     style: { borderRadius: '50%', width: 100, height: 100 },  // Circular shape
+    code_lines: [4],
   },
   {
     id: 'node4',
-    type: 'custominput',
+    mytype: 'custominput',
     data: { label: 'fill_depth' },
     position: { x: 550, y: 100 },  // Next to soil_depth
     style: { borderRadius: '50%', width: 100, height: 100 },  // Circular shape
+    code_lines: [5],
   },
 
   // Step node
   {
     id: 'node10',
-    type: 'custominput',
+    mytype: 'custominput',
     data: { label: 'pi' },
     position: { x: -50, y: 250 },  // Directly under side_length
     style: { borderRadius: '50%', width: 100, height: 100 },  // Circular shape
     sourcePosition: 'right',  // pi connects from right
+    code_lines: [7],
   },
 
   // Target node
   {
     id: 'node13',
-    type: 'target',
+    mytype: 'target',
     data: { label: 'circle_area' },
     position: { x: 100, y: 250 },  // Next to pi
     style: { borderRadius: '50%', width: 100, height: 100 },  // Circular shape
     targetPosition: 'left',  // circle_area connects to the left side
+    code_lines: [8],
   },
 
   // Output nodes (next row)
   {
     id: 'node5',
-    type: 'customoutput',
+    mytype: 'customoutput',
     data: { label: 'circle_plants' },
     position: { x: 100, y: 400 },  // Under pi
     style: { borderRadius: '50%', width: 100, height: 100 },  // Circular shape
+    code_lines: [9,14],
   },
   {
     id: 'node6',
-    type: 'customoutput',
+    mytype: 'customoutput',
     data: { label: 'semi_plants' },
     position: { x: 250, y: 400 },  // Under circle_area
     style: { borderRadius: '50%', width: 100, height: 100 },  // Circular shape
+    code_lines: [10, 13],
   },
   {
     id: 'node11',
-    type: 'step',
+    mytype: 'step',
     data: { label: 'circle_soil' },
     position: { x: 400, y: 400 },  // Under space between inputs
     style: { borderRadius: '50%', width: 100, height: 100 },  // Circular shape
+    code_lines: [21, 23, 24],
   },
   {
     id: 'node12',
-    type: 'step',
+    mytype: 'step',
     data: { label: 'fill_area' },
     position: { x: 550, y: 400 },  // Under fill_depth
     style: { borderRadius: '50%', width: 100, height: 100 },  // Circular shape
+    code_lines: [17 ,19]
   },
 
   // Final output nodes (bottom row)
   {
     id: 'node7',
-    type: 'customoutput',
+    mytype: 'customoutput',
     data: { label: 'total_plants' },
     position: { x: 175, y: 550 },  // Under circle_plants and semi_plants
     style: { borderRadius: '50%', width: 100, height: 100 },  // Circular shape
+    code_lines: [11, 15],
   },
   {
     id: 'node8',
-    type: 'customoutput',
+    mytype: 'customoutput',
     data: { label: 'total_soil' },
     position: { x: 400, y: 550 },  // Under circle_soil
     style: { borderRadius: '50%', width: 100, height: 100 },  // Circular shape
+    code_lines: [22, 25],
   },
   {
     id: 'node9',
-    type: 'customoutput',
+    mytype: 'customoutput',
     data: { label: 'total_fill' },
     position: { x: 550, y: 550 },  // Under fill_area
     style: { borderRadius: '50%', width: 100, height: 100 },  // Circular shape
+    code_lines: [18, 19],
   },
 ];
 
