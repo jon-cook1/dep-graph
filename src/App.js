@@ -1,27 +1,43 @@
 // App.js
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './App.css';
 import ButtonPanel from './components/ButtonPanel';
 import CodeEditor from './components/CodeEditor';
 import GraphDisplay from './components/GraphDisplay';
 import { ReactFlowProvider } from 'reactflow';
 import { initialNodes, initialEdges, order } from './graphElements';
+import initialCode from './initialCode.json';
 
 function App() {
   const [buffers, setBuffers] = useState({
-    Original: '# Write your Python code here\n',
-    Decomposed: '',
+    Original: initialCode.Original,
+    Decomposed: '', // Always start with an empty Decomposed code
   });
   const [activeTab, setActiveTab] = useState('Original');
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
-  
-  const editorRef = useRef(null); // Ref for the CodeEditor
-  const graphDisplayRef = useRef(null); // Ref for GraphDisplay to access resetGraphColors
+  const editorRef = useRef(null);
+  const graphRef = useRef(null);
+
+  // Load any saved Original code from localStorage on component mount
+  useEffect(() => {
+    const savedOriginal = localStorage.getItem('Original');
+    setBuffers((prevBuffers) => ({
+      ...prevBuffers,
+      Original: savedOriginal || initialCode.Original,
+      Decomposed: '', // Ensure Decomposed starts empty on load
+    }));
+  }, []);
+
+  // Save Original code to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('Original', buffers.Original);
+  }, [buffers.Original]);
 
   const handleProcessCode = () => {
-    const decomposedContent = `# Decomposed code based on ${buffers.Original}`;
+    // Populate Decomposed code only when "Process Code" is clicked
+    const decomposedContent = initialCode.Decomposed;
     setBuffers((prevBuffers) => ({
       ...prevBuffers,
       Decomposed: decomposedContent,
@@ -31,14 +47,14 @@ function App() {
   };
 
   const handleRerunAnimation = () => {
-    if (graphDisplayRef.current) {
-      graphDisplayRef.current.resetGraphColors();
+    if (graphRef.current) {
+      graphRef.current.resetGraphColors();
     }
   };
 
   return (
     <div className="app-container">
-      {/* Place ButtonPanel at the top, spanning full width */}
+      {/* Button Panel */}
       <ButtonPanel
         onProcessCode={handleProcessCode}
         onTabChange={setActiveTab}
@@ -63,7 +79,7 @@ function App() {
         <div className="graph-section">
           <ReactFlowProvider>
             <GraphDisplay
-              ref={graphDisplayRef} // Attach ref to GraphDisplay for resetGraphColors access
+              ref={graphRef}
               nodes={nodes}
               edges={edges}
               order={order}
