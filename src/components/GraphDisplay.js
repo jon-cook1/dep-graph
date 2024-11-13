@@ -13,7 +13,8 @@ const GraphDisplay = forwardRef(
     const [coloringStarted, setColoringStarted] = useState(false);
     const markerIdsRef = useRef([]);
     const colorClassesRef = useRef(new Map());
-    const savedHighlightsRef = useRef([]); // Store saved highlights after animation
+    const savedHighlightsRef = useRef([]); // Store original highlights
+    const savedDecompHighlightsRef = useRef([]); // Store decomposed highlights
 
     const createColorClass = (color) => {
       if (!colorClassesRef.current.has(color)) {
@@ -63,7 +64,8 @@ const GraphDisplay = forwardRef(
 
       animationTimeoutRef.current.forEach(clearTimeout);
       animationTimeoutRef.current = [];
-      savedHighlightsRef.current = []; // Reset saved highlights
+      savedHighlightsRef.current = []; // Reset original highlights
+      savedDecompHighlightsRef.current = []; // Reset decomposed highlights
 
       let delay = 0;
 
@@ -73,8 +75,15 @@ const GraphDisplay = forwardRef(
             setNodesState((nds) =>
               nds.map((node) => {
                 if (node.id === id) {
+                  // Highlight original code lines
                   highlightCodeLines(node.code_lines || [], color);
                   savedHighlightsRef.current.push({ lineNumbers: node.code_lines || [], color });
+
+                  // Assume decomp_code_lines are provided in each node for decomposed view
+                  if (node.decomp_code_lines) {
+                    savedDecompHighlightsRef.current.push({ lineNumbers: node.decomp_code_lines, color });
+                  }
+
                   return {
                     ...node,
                     style: {
@@ -156,8 +165,13 @@ const GraphDisplay = forwardRef(
         markerIdsRef.current = [];
 
         if (activeTab === 'Original') {
-          // Reapply saved highlights
+          // Apply original highlights
           savedHighlightsRef.current.forEach(({ lineNumbers, color }) => {
+            highlightCodeLines(lineNumbers, color);
+          });
+        } else if (activeTab === 'Decomposed') {
+          // Apply decomposed highlights
+          savedDecompHighlightsRef.current.forEach(({ lineNumbers, color }) => {
             highlightCodeLines(lineNumbers, color);
           });
         }
