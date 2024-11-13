@@ -86,6 +86,7 @@ function App() {
               editorRef={editorRef}
               setNodes={setNodes}
               setEdges={setEdges}
+              activeTab={activeTab} // Pass activeTab to GraphDisplay
             />
           </ReactFlowProvider>
         </div>
