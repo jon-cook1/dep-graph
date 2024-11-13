@@ -13,8 +13,8 @@ const GraphDisplay = forwardRef(
     const [coloringStarted, setColoringStarted] = useState(false);
     const markerIdsRef = useRef([]);
     const colorClassesRef = useRef(new Map());
-    const savedHighlightsRef = useRef([]); // Store original highlights
-    const savedDecompHighlightsRef = useRef([]); // Store decomposed highlights
+    const savedHighlightsRef = useRef([]); // Store cumulative original highlights
+    const savedDecompHighlightsRef = useRef([]); // Store cumulative decomposed highlights
 
     const createColorClass = (color) => {
       if (!colorClassesRef.current.has(color)) {
@@ -33,22 +33,27 @@ const GraphDisplay = forwardRef(
       return colorClassesRef.current.get(color);
     };
 
-    const highlightCodeLines = useCallback(
-      (lineNumbers, color) => {
-        if (editorRef.current && editorRef.current.editor) {
-          const session = editorRef.current.editor.getSession();
-          const Range = ace.require('ace/range').Range;
+    const applyCurrentHighlights = useCallback(() => {
+      if (editorRef.current && editorRef.current.editor) {
+        const session = editorRef.current.editor.getSession();
+        // Remove existing markers
+        markerIdsRef.current.forEach((markerId) => session.removeMarker(markerId));
+        markerIdsRef.current = [];
 
+        // Determine highlights to apply based on active tab
+        const highlights = activeTab === 'Original' ? savedHighlightsRef.current : savedDecompHighlightsRef.current;
+
+        // Apply cumulative highlights
+        highlights.forEach(({ lineNumbers, color }) => {
           const colorClass = createColorClass(color);
-
           lineNumbers.forEach((line) => {
+            const Range = ace.require('ace/range').Range;
             const markerId = session.addMarker(new Range(line - 1, 0, line - 1, 1), colorClass, 'fullLine');
             markerIdsRef.current.push(markerId);
           });
-        }
-      },
-      [editorRef]
-    );
+        });
+      }
+    }, [editorRef, activeTab]);
 
     useEffect(() => {
       if (initialNodes.length && initialEdges.length) {
@@ -75,14 +80,16 @@ const GraphDisplay = forwardRef(
             setNodesState((nds) =>
               nds.map((node) => {
                 if (node.id === id) {
-                  // Highlight original code lines
-                  highlightCodeLines(node.code_lines || [], color);
-                  savedHighlightsRef.current.push({ lineNumbers: node.code_lines || [], color });
-
-                  // Assume decomp_code_lines are provided in each node for decomposed view
+                  // Add to cumulative highlights
+                  if (node.code_lines) {
+                    savedHighlightsRef.current.push({ lineNumbers: node.code_lines, color });
+                  }
                   if (node.decomp_code_lines) {
                     savedDecompHighlightsRef.current.push({ lineNumbers: node.decomp_code_lines, color });
                   }
+
+                  // Update editor with current cumulative highlights
+                  applyCurrentHighlights();
 
                   return {
                     ...node,
@@ -117,7 +124,7 @@ const GraphDisplay = forwardRef(
 
         delay += 500;
       });
-    }, [order, setNodesState, setEdgesState, highlightCodeLines]);
+    }, [order, setNodesState, setEdgesState, applyCurrentHighlights]);
 
     // Use `useImperativeHandle` to expose `resetGraphColors` to parent component via `ref`
     useImperativeHandle(ref, () => ({
@@ -155,28 +162,10 @@ const GraphDisplay = forwardRef(
       },
     }));
 
-    // Handle tab changes to remove or reapply highlights
+    // Update editor highlights whenever activeTab changes
     useEffect(() => {
-      if (editorRef.current && editorRef.current.editor) {
-        const session = editorRef.current.editor.getSession();
-        
-        // Remove existing markers
-        markerIdsRef.current.forEach((markerId) => session.removeMarker(markerId));
-        markerIdsRef.current = [];
-
-        if (activeTab === 'Original') {
-          // Apply original highlights
-          savedHighlightsRef.current.forEach(({ lineNumbers, color }) => {
-            highlightCodeLines(lineNumbers, color);
-          });
-        } else if (activeTab === 'Decomposed') {
-          // Apply decomposed highlights
-          savedDecompHighlightsRef.current.forEach(({ lineNumbers, color }) => {
-            highlightCodeLines(lineNumbers, color);
-          });
-        }
-      }
-    }, [activeTab, highlightCodeLines]);
+      applyCurrentHighlights();
+    }, [activeTab, applyCurrentHighlights]);
 
     useEffect(() => {
       if (nodes.length && edges.length && !coloringStarted) {
