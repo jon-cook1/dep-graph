@@ -1,5 +1,3 @@
-// App.js
-
 import React, { useState, useRef, useEffect } from 'react';
 import './App.css';
 import ButtonPanel from './components/ButtonPanel';
@@ -15,6 +13,7 @@ function App() {
     Decomposed: '', // Always start with an empty Decomposed code
   });
   const [activeTab, setActiveTab] = useState('Original');
+  const [noColor, setNoColor] = useState(false); // New state for No Color
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
   const editorRef = useRef(null);
@@ -52,6 +51,10 @@ function App() {
     }
   };
 
+  const handleToggleNoColor = () => {
+    setNoColor((prevNoColor) => !prevNoColor); // Toggle noColor state
+  };
+
   return (
     <div className="app-container">
       {/* Button Panel */}
@@ -60,6 +63,7 @@ function App() {
         onTabChange={setActiveTab}
         activeTab={activeTab}
         onRerunAnimation={handleRerunAnimation}
+        onToggleNoColor={handleToggleNoColor} // Pass the toggle handler
       />
 
       <div className="content-container">
@@ -87,6 +91,7 @@ function App() {
               setNodes={setNodes}
               setEdges={setEdges}
               activeTab={activeTab} // Pass activeTab to GraphDisplay
+              noColor={noColor} // Pass noColor state to GraphDisplay
             />
           </ReactFlowProvider>
         </div>

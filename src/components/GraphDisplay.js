@@ -5,12 +5,13 @@ import { applyStyles } from '../utils/GraphUtils';
 import ace from 'ace-builds';
 
 const GraphDisplay = forwardRef(
-  ({ nodes: initialNodes, edges: initialEdges, order, editorRef, activeTab }, ref) => {
+  ({ nodes: initialNodes, edges: initialEdges, order, editorRef, activeTab, noColor }, ref) => {
     const [nodes, setNodesState, onNodesChange] = useNodesState([]);
     const [edges, setEdgesState, onEdgesChange] = useEdgesState([]);
     const { fitView } = useReactFlow();
     const animationTimeoutRef = useRef([]);
     const activeTabRef = useRef(activeTab); // Ref to track the latest activeTab
+    const noColorRef = useRef(noColor); // Ref to track the latest noColor state
     const [coloringStarted, setColoringStarted] = useState(false);
     const markerIdsRef = useRef([]);
     const colorClassesRef = useRef(new Map());
@@ -34,8 +35,22 @@ const GraphDisplay = forwardRef(
       return colorClassesRef.current.get(color);
     };
 
+    const clearHighlights = useCallback(() => {
+      if (editorRef.current && editorRef.current.editor) {
+        const session = editorRef.current.editor.getSession();
+        markerIdsRef.current.forEach((markerId) => session.removeMarker(markerId));
+        markerIdsRef.current = [];
+      }
+    }, [editorRef]);
+
     const applyHighlightsForTab = useCallback(
       (currentTab) => {
+        // Use latest noColorRef state
+        if (noColorRef.current) {
+          clearHighlights();
+          return;
+        }
+
         if (editorRef.current && editorRef.current.editor) {
           const session = editorRef.current.editor.getSession();
           markerIdsRef.current.forEach((markerId) => session.removeMarker(markerId));
@@ -53,7 +68,7 @@ const GraphDisplay = forwardRef(
           });
         }
       },
-      [editorRef]
+      [editorRef, clearHighlights]
     );
 
     useEffect(() => {
@@ -68,7 +83,6 @@ const GraphDisplay = forwardRef(
     const runColorAnimation = useCallback(() => {
       if (!order || !order.length) return;
 
-      // Clear previous timeouts and reset saved highlights for fresh animation
       animationTimeoutRef.current.forEach(clearTimeout);
       animationTimeoutRef.current = [];
       savedHighlightsRef.current = [];
@@ -89,7 +103,12 @@ const GraphDisplay = forwardRef(
                     savedDecompHighlightsRef.current.push({ lineNumbers: node.decomp_code_lines, color });
                   }
 
-                  applyHighlightsForTab(activeTabRef.current);
+                  // Apply highlights based on the latest noColorRef state
+                  if (!noColorRef.current) {
+                    applyHighlightsForTab(activeTabRef.current);
+                  } else {
+                    clearHighlights(); // Clear highlights if noColor is toggled during animation
+                  }
 
                   return {
                     ...node,
@@ -124,7 +143,7 @@ const GraphDisplay = forwardRef(
 
         delay += 500; // Increment delay for each subsequent node
       });
-    }, [order, setNodesState, setEdgesState, applyHighlightsForTab]);
+    }, [order, setNodesState, setEdgesState, applyHighlightsForTab, clearHighlights]);
 
     useImperativeHandle(ref, () => ({
       resetGraphColors() {
@@ -151,13 +170,9 @@ const GraphDisplay = forwardRef(
           }))
         );
 
-        setColoringStarted(false); // Reset coloringStarted for rerun animation
+        setColoringStarted(false);
 
-        if (editorRef.current && editorRef.current.editor && editorRef.current.editor.getSession()) {
-          const session = editorRef.current.editor.getSession();
-          markerIdsRef.current.forEach((markerId) => session.removeMarker(markerId));
-          markerIdsRef.current = [];
-        }
+        clearHighlights();
       },
     }));
 
@@ -172,6 +187,16 @@ const GraphDisplay = forwardRef(
         setColoringStarted(true);
       }
     }, [nodes, edges, runColorAnimation, coloringStarted]);
+
+    // Update noColorRef whenever noColor changes
+    useEffect(() => {
+      noColorRef.current = noColor;
+      if (noColor) {
+        clearHighlights();
+      } else {
+        applyHighlightsForTab(activeTab);
+      }
+    }, [noColor, applyHighlightsForTab, clearHighlights, activeTab]);
 
     return (
       <div className="graph-display">
