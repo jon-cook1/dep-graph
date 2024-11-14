@@ -8,7 +8,7 @@ export const initialNodes = [
     position: { x: 100, y: 100 },  // Leftmost node
     style: { borderRadius: '50%', width: 100, height: 100 },  // Circular shape
     code_lines: [2],
-    decomp_code_lines: [23],
+    decomp_code_lines: [29],
   },
   {
     id: 'node2',
@@ -17,7 +17,7 @@ export const initialNodes = [
     position: { x: 250, y: 100 },  // Next to side_length
     style: { borderRadius: '50%', width: 100, height: 100 },  // Circular shape
     code_lines: [3],
-    decomp_code_lines: [24],
+    decomp_code_lines: [30],
   },
   {
     id: 'node3',
@@ -26,7 +26,7 @@ export const initialNodes = [
     position: { x: 400, y: 100 },  // Next to plant_spacing
     style: { borderRadius: '50%', width: 100, height: 100 },  // Circular shape
     code_lines: [4],
-    decomp_code_lines: [25],
+    decomp_code_lines: [31],
   },
   {
     id: 'node4',
@@ -35,7 +35,7 @@ export const initialNodes = [
     position: { x: 550, y: 100 },  // Next to soil_depth
     style: { borderRadius: '50%', width: 100, height: 100 },  // Circular shape
     code_lines: [5],
-    decomp_code_lines: [26],
+    decomp_code_lines: [32],
   },
 
   // Step node
@@ -59,7 +59,7 @@ export const initialNodes = [
     style: { borderRadius: '50%', width: 100, height: 100 },  // Circular shape
     targetPosition: 'left',  // circle_area connects to the left side
     code_lines: [8],
-    decomp_code_lines: [2,4,6,12,17,28],
+    decomp_code_lines: [2,4,7,16,21],
   },
 
   // Output nodes (next row)
@@ -70,7 +70,7 @@ export const initialNodes = [
     position: { x: 100, y: 400 },  // Under pi
     style: { borderRadius: '50%', width: 100, height: 100 },  // Circular shape
     code_lines: [9,14],
-    decomp_code_lines: [7,32],
+    decomp_code_lines: [8,12],
   },
   {
     id: 'node6',
@@ -79,7 +79,7 @@ export const initialNodes = [
     position: { x: 250, y: 400 },  // Under circle_area
     style: { borderRadius: '50%', width: 100, height: 100 },  // Circular shape
     code_lines: [10, 13],
-    decomp_code_lines: [6,8,10,30,31],
+    decomp_code_lines: [6,9,11,34],
   },
   {
     id: 'node11',
@@ -88,7 +88,7 @@ export const initialNodes = [
     position: { x: 400, y: 400 },  // Under space between inputs
     style: { borderRadius: '50%', width: 100, height: 100 },  // Circular shape
     code_lines: [21, 23, 24],
-    decomp_code_lines: [18,20,38,39,40],
+    decomp_code_lines: [20,22,24,25,35],
   },
   {
     id: 'node12',
@@ -97,7 +97,7 @@ export const initialNodes = [
     position: { x: 550, y: 400 },  // Under fill_depth
     style: { borderRadius: '50%', width: 100, height: 100 },  // Circular shape
     code_lines: [17],
-    decomp_code_lines: [13],
+    decomp_code_lines: [15,16,36],
   },
 
   // Final output nodes (bottom row)
@@ -108,7 +108,7 @@ export const initialNodes = [
     position: { x: 175, y: 550 },  // Under circle_plants and semi_plants
     style: { borderRadius: '50%', width: 100, height: 100 },  // Circular shape
     code_lines: [11, 15],
-    decomp_code_lines: [9,33],
+    decomp_code_lines: [10,13],
   },
   {
     id: 'node8',
@@ -117,7 +117,7 @@ export const initialNodes = [
     position: { x: 400, y: 550 },  // Under circle_soil
     style: { borderRadius: '50%', width: 100, height: 100 },  // Circular shape
     code_lines: [22, 25],
-    decomp_code_lines: [19,41],
+    decomp_code_lines: [23,26],
   },
   {
     id: 'node9',
@@ -126,7 +126,7 @@ export const initialNodes = [
     position: { x: 550, y: 550 },  // Under fill_area
     style: { borderRadius: '50%', width: 100, height: 100 },  // Circular shape
     code_lines: [18, 19],
-    decomp_code_lines: [14,15,35,36],
+    decomp_code_lines: [17,18],
   },
 ];
 
