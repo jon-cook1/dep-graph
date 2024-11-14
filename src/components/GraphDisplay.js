@@ -10,6 +10,7 @@ const GraphDisplay = forwardRef(
     const [edges, setEdgesState, onEdgesChange] = useEdgesState([]);
     const { fitView } = useReactFlow();
     const animationTimeoutRef = useRef([]);
+    const activeTabRef = useRef(activeTab); // Ref to track the latest activeTab
     const [coloringStarted, setColoringStarted] = useState(false);
     const markerIdsRef = useRef([]);
     const colorClassesRef = useRef(new Map());
@@ -33,27 +34,27 @@ const GraphDisplay = forwardRef(
       return colorClassesRef.current.get(color);
     };
 
-    const applyCurrentHighlights = useCallback(() => {
-      if (editorRef.current && editorRef.current.editor) {
-        const session = editorRef.current.editor.getSession();
-        // Remove existing markers
-        markerIdsRef.current.forEach((markerId) => session.removeMarker(markerId));
-        markerIdsRef.current = [];
+    const applyHighlightsForTab = useCallback(
+      (currentTab) => {
+        if (editorRef.current && editorRef.current.editor) {
+          const session = editorRef.current.editor.getSession();
+          markerIdsRef.current.forEach((markerId) => session.removeMarker(markerId));
+          markerIdsRef.current = [];
 
-        // Determine highlights to apply based on active tab
-        const highlights = activeTab === 'Original' ? savedHighlightsRef.current : savedDecompHighlightsRef.current;
+          const highlights = currentTab === 'Original' ? savedHighlightsRef.current : savedDecompHighlightsRef.current;
 
-        // Apply cumulative highlights
-        highlights.forEach(({ lineNumbers, color }) => {
-          const colorClass = createColorClass(color);
-          lineNumbers.forEach((line) => {
-            const Range = ace.require('ace/range').Range;
-            const markerId = session.addMarker(new Range(line - 1, 0, line - 1, 1), colorClass, 'fullLine');
-            markerIdsRef.current.push(markerId);
+          highlights.forEach(({ lineNumbers, color }) => {
+            const colorClass = createColorClass(color);
+            lineNumbers.forEach((line) => {
+              const Range = ace.require('ace/range').Range;
+              const markerId = session.addMarker(new Range(line - 1, 0, line - 1, 1), colorClass, 'fullLine');
+              markerIdsRef.current.push(markerId);
+            });
           });
-        });
-      }
-    }, [editorRef, activeTab]);
+        }
+      },
+      [editorRef]
+    );
 
     useEffect(() => {
       if (initialNodes.length && initialEdges.length) {
@@ -67,12 +68,13 @@ const GraphDisplay = forwardRef(
     const runColorAnimation = useCallback(() => {
       if (!order || !order.length) return;
 
+      // Clear previous timeouts and reset saved highlights for fresh animation
       animationTimeoutRef.current.forEach(clearTimeout);
       animationTimeoutRef.current = [];
-      savedHighlightsRef.current = []; // Reset original highlights
-      savedDecompHighlightsRef.current = []; // Reset decomposed highlights
+      savedHighlightsRef.current = [];
+      savedDecompHighlightsRef.current = [];
 
-      let delay = 0;
+      let delay = 500; // Initial delay before the first node is colored
 
       order.forEach(([id, color]) => {
         animationTimeoutRef.current.push(
@@ -80,7 +82,6 @@ const GraphDisplay = forwardRef(
             setNodesState((nds) =>
               nds.map((node) => {
                 if (node.id === id) {
-                  // Add to cumulative highlights
                   if (node.code_lines) {
                     savedHighlightsRef.current.push({ lineNumbers: node.code_lines, color });
                   }
@@ -88,8 +89,7 @@ const GraphDisplay = forwardRef(
                     savedDecompHighlightsRef.current.push({ lineNumbers: node.decomp_code_lines, color });
                   }
 
-                  // Update editor with current cumulative highlights
-                  applyCurrentHighlights();
+                  applyHighlightsForTab(activeTabRef.current);
 
                   return {
                     ...node,
@@ -122,11 +122,10 @@ const GraphDisplay = forwardRef(
           }, delay)
         );
 
-        delay += 500;
+        delay += 500; // Increment delay for each subsequent node
       });
-    }, [order, setNodesState, setEdgesState, applyCurrentHighlights]);
+    }, [order, setNodesState, setEdgesState, applyHighlightsForTab]);
 
-    // Use `useImperativeHandle` to expose `resetGraphColors` to parent component via `ref`
     useImperativeHandle(ref, () => ({
       resetGraphColors() {
         animationTimeoutRef.current.forEach(clearTimeout);
@@ -152,7 +151,7 @@ const GraphDisplay = forwardRef(
           }))
         );
 
-        setColoringStarted(false);
+        setColoringStarted(false); // Reset coloringStarted for rerun animation
 
         if (editorRef.current && editorRef.current.editor && editorRef.current.editor.getSession()) {
           const session = editorRef.current.editor.getSession();
@@ -162,10 +161,10 @@ const GraphDisplay = forwardRef(
       },
     }));
 
-    // Update editor highlights whenever activeTab changes
     useEffect(() => {
-      applyCurrentHighlights();
-    }, [activeTab, applyCurrentHighlights]);
+      activeTabRef.current = activeTab;
+      applyHighlightsForTab(activeTab);
+    }, [activeTab, applyHighlightsForTab]);
 
     useEffect(() => {
       if (nodes.length && edges.length && !coloringStarted) {
